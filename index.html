@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Söz İzi: Bağlam ipuçlu ve anlık yazım geri bildirimli Türkçe söz varlığı, deyim/atasözü ve kültürel miras kelime uygulaması.">
+  <title>Söz İzi – Türkçe Söz Varlığı ve Yazım Farkındalığı Uygulaması</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f2efe6'/%3E%3Crect x='5' y='9' width='10' height='10' rx='1.5' fill='%23b5432c'/%3E%3Ccircle cx='22' cy='14' r='5' fill='%23c2963a'/%3E%3Cpath d='M5 25h22' stroke='%2322334f' stroke-width='2' opacity='.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-theme="tv">
+  <header class="topbar">
+    <div class="brand">
+      <span class="kicker">Türkçe Söz Varlığı ve Yazım Farkındalığı Platformu</span>
+      <h1>Söz <span>İzi</span></h1>
+    </div>
+    <nav class="actions" aria-label="Menü">
+      <button id="btn-home" class="icon-btn" title="Ana menü" aria-label="Ana menü">⌂ <span class="btn-lbl">Menü</span></button>
+      <button id="btn-help" class="icon-btn" title="Nasıl oynanır?" aria-label="Nasıl oynanır">? <span class="btn-lbl">Kurallar</span></button>
+      <button id="btn-stats" class="icon-btn" title="İstatistikler" aria-label="İstatistikler">▤ <span class="btn-lbl">İstatistik</span></button>
+      <button id="btn-research" class="icon-btn" title="Araştırma Verileri (CSV/JSON)" aria-label="Araştırma Verileri">📊 <span class="btn-lbl">Araştırma</span></button>
+      <button id="btn-settings" class="icon-btn" title="Ayarlar" aria-label="Ayarlar">⚙ <span class="btn-lbl">Ayarlar</span></button>
+    </nav>
+  </header>
+
+  <main id="app">
+    <!-- Başlangıç ekranı -->
+    <section id="screen-start" class="screen">
+      <h2 class="start-title">Bağlamın ve harflerin izini sür, sözcüğü <em>5 tahminde</em> bul.</h2>
+      <p class="start-sub">Doğru yerdeki harf <span class="legend-chip correct">kırmızı kare</span>, sözcükte olup yanlış yerdeki harf <span class="legend-chip present">sarı daire</span> ile gösterilir; yazım yanlışlarında <b>Akıllı Yazım Koçu</b> devreye girer.</p>
+      <p class="start-intro"><button class="btn ghost" id="btn-intro">▶ Nasıl çalışır? Etkileşimli tanıtımı izle</button></p>
+
+      <!-- Dil Modülü Seçici -->
+      <div class="module-bar" aria-label="Dil modülü seçimi">
+        <div class="module-bar-head">
+          <span class="module-bar-title">1. Dil Modülü Seçimi</span>
+          <span class="module-bar-sub" id="module-count-info">Öz Türkçe karşılıklar, deyimler ve kültürel miras sözcükleri</span>
+        </div>
+        <div class="module-pills" id="opt-module"></div>
+      </div>
+
+      <div class="mode-grid">
+        <button class="mode-card" data-mode="solo">
+          <span class="mode-fig">Mod I</span>
+          <span class="mode-name">Bireysel Çalışma</span>
+          <span class="mode-desc">Bağlam ipuçlarıyla sözcükleri çöz, köken ve anlam kartlarını incele, İz Kartı doldur.</span>
+        </button>
+        <button class="mode-card" data-mode="duo">
+          <span class="mode-fig">Mod II</span>
+          <span class="mode-name">İki Takım</span>
+          <span class="mode-desc">Aynı cihazda sırayla yarışın. Yanlış tahmin veya süre aşımında sıra rakibe geçer.</span>
+        </button>
+        <button class="mode-card" data-mode="daily">
+          <span class="mode-fig">Mod III</span>
+          <span class="mode-name">Günün Sözcüğü</span>
+          <span class="mode-desc">Herkes için her gün aynı 5 harfli Türkçe sözcük ve anlam kartı. Sonucunu paylaş.</span>
+        </button>
+        <button class="mode-card mode-card-wide" data-mode="tournament">
+          <span class="mode-fig">Mod IV · Sınıf İçi Uygulama</span>
+          <span class="mode-name">Sınıf Turnuvası</span>
+          <span class="mode-desc">2–12 takım, takım başına süre, 4→7 harf turları, yarı final ve final. Akıllı tahta ve deneysel sınıf uygulamaları için tasarlandı.</span>
+        </button>
+      </div>
+      <p class="start-intro hidden" id="tour-resume-row"><button class="btn secondary" id="btn-tour-resume">▶ Kaldığı yerden devam et</button> <span class="status" id="tour-resume-info"></span></p>
+
+      <div class="start-options">
+        <div class="opt">
+          <label>Harf sayısı</label>
+          <div class="segmented" id="opt-length">
+            <button data-len="4">4</button>
+            <button data-len="5" class="active">5</button>
+            <button data-len="6">6</button>
+            <button data-len="7">7</button>
+          </div>
+        </div>
+        <div class="opt">
+          <label for="opt-timer">Tahmin süresi: <strong id="opt-timer-val">25 sn</strong></label>
+          <input type="range" id="opt-timer" min="0" max="60" step="5" value="25">
+        </div>
+        <div class="opt">
+          <label>Sözcük sayısı</label>
+          <div class="segmented" id="opt-words">
+            <button data-words="3">3</button>
+            <button data-words="5" class="active">5</button>
+            <button data-words="10">10</button>
+          </div>
+        </div>
+        <div class="opt">
+          <label>Araştırma seçenekleri</label>
+          <label class="tour-check" style="margin-bottom:0.35rem"><input type="checkbox" id="opt-clue" checked> Bağlam ipucu şeridini göster</label>
+          <label class="tour-check"><input type="checkbox" id="opt-coach" checked> Akıllı Yazım Koçu geri bildirimi</label>
+        </div>
+        <div class="opt opt-names hidden" id="opt-names">
+          <label>Takım adları</label>
+          <div class="name-row">
+            <input id="team-a" type="text" maxlength="14" value="Kırmızı Takım" aria-label="1. takım adı">
+            <input id="team-b" type="text" maxlength="14" value="Mavi Takım" aria-label="2. takım adı">
+          </div>
+        </div>
+      </div>
+      <p class="start-footer"><a id="admin-link" class="hidden" href="admin.html">Sözcük havuzu yönetimi</a></p>
+    </section>
+
+    <!-- Sınıf turnuvası kurulumu -->
+    <section id="screen-tour" class="screen hidden">
+      <h2 class="start-title">Sınıf <em>Turnuvası</em></h2>
+      <p class="start-sub">Her takım kendi süresinde bağlam ipucuyla sözcüğü çözer, çözüm sonunda anlam ve köken kartı yansıda paylaşılır. Lig turları bitince ilk dört takım yarı final ve finale çıkar.</p>
+      <div class="tour-setup">
+        <div class="tour-block">
+          <div class="opt">
+            <label for="tour-module">Dil Modülü</label>
+            <select id="tour-module"></select>
+          </div>
+          <div class="opt">
+            <label for="tour-count">Takım sayısı</label>
+            <select id="tour-count"></select>
+          </div>
+          <div class="opt">
+            <label>Takım adları</label>
+            <div class="tour-names" id="tour-names"></div>
+          </div>
+        </div>
+        <div class="tour-block">
+          <div class="opt">
+            <label for="tour-time">Takım başına süre: <strong id="tour-time-val">90 sn</strong></label>
+            <input type="range" id="tour-time" min="30" max="300" step="15" value="90">
+            <div class="segmented tour-time-presets">
+              <button data-sec="45">45 sn</button><button data-sec="60">1 dk</button><button data-sec="90">1,5 dk</button><button data-sec="120">2 dk</button><button data-sec="180">3 dk</button>
+            </div>
+          </div>
+          <div class="opt">
+            <label>Harf bandı (turlar sırayla döner)</label>
+            <div class="segmented" id="tour-lengths">
+              <button data-len="4" class="active">4</button><button data-len="5" class="active">5</button><button data-len="6" class="active">6</button><button data-len="7" class="active">7</button>
+            </div>
+          </div>
+          <div class="opt">
+            <label for="tour-rounds">Lig turu sayısı (her turda her takım bir sözcük)</label>
+            <select id="tour-rounds"></select>
+          </div>
+          <div class="opt">
+            <label class="tour-check"><input type="checkbox" id="tour-clue" checked> Tahta üstünde bağlam ipucu göster</label>
+          </div>
+          <div class="opt">
+            <label class="tour-check"><input type="checkbox" id="tour-playoff" checked> Lig sonunda eleme: ilk 4 → yarı final → final</label>
+          </div>
+        </div>
+        <div class="tour-block tour-summary">
+          <div id="tour-estimate" class="tour-estimate"></div>
+          <div id="tour-pool" class="tour-pool"></div>
+          <div class="btn-row">
+            <button class="btn" id="tour-start">Turnuvayı başlat</button>
+            <button class="btn ghost" id="tour-back">Geri</button>
+            <button class="btn ghost" id="tour-reset-used" title="Daha önce çıkan sözcükler yeniden çıkabilir">Kullanılan sözcükleri sıfırla</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Oyun ekranı -->
+    <section id="screen-game" class="screen hidden">
+      <div class="game-layout">
+        <div class="play-column" id="play-column">
+          <div id="turn-banner" class="turn-banner hidden" aria-live="polite"></div>
+          <div class="status-row">
+            <div id="turn-label" class="turn-label"></div>
+            <div id="round-label" class="round-label"></div>
+          </div>
+          <div id="clue-banner" class="clue-banner hidden" aria-live="polite"></div>
+          <div class="timer" id="timer" aria-live="off">
+            <div class="timer-clock" title="Kalan süre">
+              <span id="timer-text" class="timer-text">25</span>
+              <span class="timer-unit">sn</span>
+            </div>
+            <div class="timer-track"><div id="timer-bar" class="timer-bar"></div></div>
+          </div>
+          <div id="board" class="board" aria-label="Tahmin tahtası"></div>
+          <div id="ortho-coach" class="ortho-coach hidden" role="alert" aria-live="polite"></div>
+          <div id="toast" class="toast" role="status" aria-live="polite"></div>
+          <div id="keyboard" class="keyboard" aria-label="Klavye"></div>
+        </div>
+        <aside class="side-column">
+          <div id="scoreboard" class="scoreboard"></div>
+          <div id="word-insight-panel"></div>
+          <div id="card-panel" class="card-panel"></div>
+          <div id="draw-panel" class="draw-panel hidden"></div>
+        </aside>
+      </div>
+      <div class="plate-caption">Söz İzi · Bağlam ipucu, 5 tahmin, kırmızı kare / sarı daire ve Akıllı Yazım Koçu</div>
+      <div id="turn-flash" class="turn-flash hidden" aria-hidden="true"></div>
+    </section>
+  </main>
+
+  <footer class="credit">
+    <div class="credit-text">
+      <span class="kicker">Türk Dili ve Edebiyatı Araştırma Materyali</span>
+      <span><b>Söz İzi</b> · Bağlam İpuçlu Söz Varlığı, Deyim/Atasözü ve Anlık Yazım Geri Bildirimi Platformu</span>
+    </div>
+    <div class="credit-text" style="text-align:right">
+      <span class="kicker">Veri Gizliliği</span>
+      <span>Kişisel veri toplanmaz; araştırma kayıtları anonim tutulur.</span>
+    </div>
+  </footer>
+
+  <div id="intro" class="intro hidden" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+    <div class="intro-box">
+      <div class="intro-kicker">Tanıtım · <span id="intro-step-label">1 / 6</span></div>
+      <h2 id="intro-title"></h2>
+      <div id="intro-demo" class="intro-demo"></div>
+      <p id="intro-text" class="intro-text"></p>
+      <div class="intro-nav">
+        <button class="btn ghost" id="intro-skip">Atla</button>
+        <div class="intro-dots" id="intro-dots"></div>
+        <div class="btn-row">
+          <button class="btn secondary" id="intro-prev">Geri</button>
+          <button class="btn" id="intro-next">İleri</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <button class="modal-close" id="modal-close" aria-label="Kapat">×</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script src="js/words.js"></script>
+  <script src="js/logic.js"></script>
+  <script src="js/soz-izi-data.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/intro.js"></script>
+</body>
+</html>

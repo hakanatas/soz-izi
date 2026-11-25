@@ -1,0 +1,8 @@
+# Söz İzi uygulama ayarları
+# Değeri "evet" ya da "hayır" yapıp kaydedin; # ile başlayan satırlar yok sayılır.
+
+# Tahminler Türkçe sözlükte aransın mı? Kapatılırsa her harf dizisi kabul edilir.
+sözlük kontrolü: evet
+
+# İki takım modunda sıra rakibe geçince sözcükten rastgele bir harf açılsın mı?
+bonus harf: hayır

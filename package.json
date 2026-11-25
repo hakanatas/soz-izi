@@ -1,0 +1,12 @@
+{
+  "name": "soz-izi",
+  "version": "1.0.0",
+  "description": "Söz İzi – Bağlam ipuçlu ve anlık yazım geri bildirimli Türkçe söz varlığı ve deyim uygulaması",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.js",
+    "static": "python3 -m http.server 8080"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Söz İzi – Sözcük Havuzu Yönetimi</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f2efe6'/%3E%3Crect x='5' y='9' width='10' height='10' rx='1.5' fill='%23b5432c'/%3E%3Ccircle cx='22' cy='14' r='5' fill='%23c2963a'/%3E%3Cpath d='M5 25h22' stroke='%2322334f' stroke-width='2' opacity='.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin { max-width: 1000px; margin: 0 auto; padding: 1rem 2.5vw 3rem; display: grid; gap: 1.1rem; }
+    .panel { position: relative; padding: 1.2rem 1.3rem; border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--paper-2); box-shadow: var(--hard); }
+    .panel h2 { margin: 0 0 0.5rem; font-family: var(--serif); font-size: 1.35rem; }
+    .panel p { color: var(--ink-soft); margin: 0 0 0.7rem; font-size: 1rem; line-height: 1.55; }
+    textarea, input[type="password"], input[type="search"] { width: 100%; }
+    textarea { min-height: 120px; resize: vertical; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .row > * { flex: 1; }
+    .row > .btn { flex: 0 0 auto; }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tabs button { padding: 0.5rem 0.9rem; border-radius: 4px; border: 1px solid var(--line-strong); background: var(--paper-2); color: var(--ink); font-weight: 700; font-size: 1rem; box-shadow: var(--hard); transition: all 0.15s; }
+    .tabs button:hover { color: var(--accent); border-color: var(--accent); }
+    .tabs button.active { background: var(--accent); border-color: var(--accent); color: #fdfbf5; }
+    .tabs button small { font-family: var(--mono); font-weight: 400; font-size: 0.8rem; margin-left: 0.4rem; opacity: 0.8; }
+    .words { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; max-height: 460px; overflow: auto; }
+    .chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.4rem 0.25rem 0.7rem; border-radius: 4px; background: var(--paper); border: 1px solid var(--line); font-family: var(--mono); font-weight: 500; text-transform: uppercase; font-size: 0.9rem; }
+    .chip button { border: 0; background: transparent; color: var(--muted); font-size: 1.1rem; line-height: 1; padding: 0 0.2rem; }
+    .chip button:hover { color: var(--accent); }
+    .report { margin-top: 0.7rem; font-size: 1rem; line-height: 1.6; }
+    .report .ok { color: var(--green); }
+    .report .warn { color: var(--gold); }
+    .report .bad { color: var(--accent); }
+    .status { font-size: 0.95rem; color: var(--ink-soft); }
+    .status b { color: var(--green); }
+    .status b.off { color: var(--accent); }
+    .howto { margin-top: 0.7rem; font-size: 0.95rem; color: var(--ink-soft); }
+    .howto summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+    .howto ol { margin: 0.5rem 0 0; padding-left: 1.3rem; line-height: 1.55; }
+    .row > input[type="text"] { flex: 1; }
+    a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+  </style>
+</head>
+<body data-theme="tv">
+  <header class="topbar">
+    <div class="brand">
+      <span class="kicker">Söz İzi · Yönetim</span>
+      <h1>Sözcük <span>Havuzu</span></h1>
+    </div>
+    <nav class="actions"><a class="icon-btn" href="index.html" title="Uygulamaya dön">⌂ Uygulamaya dön</a></nav>
+  </header>
+
+  <main class="admin">
+    <section class="panel" id="login-panel">
+      <h2>Bağlantı</h2>
+      <p class="status" id="status" style="margin:0 0 0.8rem">Ortam algılanıyor…</p>
+
+      <!-- Node sunucusu -->
+      <div id="login-server" class="hidden">
+        <div id="login-form-server">
+          <p>Sözcük eklemek ve silmek için sunucuda tanımlı <code>ADMIN_PASSWORD</code> şifresini girin.</p>
+          <div class="row">
+            <input type="password" id="password" placeholder="Yönetim şifresi" autocomplete="current-password">
+            <button class="btn" id="btn-login">Giriş yap</button>
+          </div>
+        </div>
+        <p id="server-disabled" class="status hidden"><b class="off">Sunucuda ADMIN_PASSWORD tanımlı değil;</b> ekleme, silme ve ayarlar kapalı.</p>
+      </div>
+
+      <!-- Yalnızca GitHub -->
+      <div id="login-github" class="hidden">
+        <div id="easy-edit">
+          <p><b>Kolay yol (token gerekmez):</b> genel sözcükler depodaki <code>kelimeler.txt</code>, ayarlar <code>ayarlar.txt</code> dosyasında durur. Aşağıdaki düğme dosyayı düzenleyicide açar; yeni sözcükleri her satıra bir tane yazıp kaydedebilirsiniz.</p>
+          <div class="row" style="margin-bottom:0.6rem">
+            <a class="btn" id="edit-words-link" href="#" target="_blank" rel="noopener">✎ kelimeler.txt dosyasını düzenle</a>
+            <a class="btn secondary" id="edit-settings-link" href="#" target="_blank" rel="noopener">⚙ ayarlar.txt dosyasını düzenle</a>
+          </div>
+          <div class="row">
+            <input type="text" id="gh-owner" placeholder="Kullanıcı adı" aria-label="GitHub kullanıcı adı">
+            <input type="text" id="gh-repo" placeholder="Depo adı" aria-label="Depo adı">
+            <input type="text" id="gh-branch" placeholder="Dal (main)" aria-label="Dal adı">
+          </div>
+        </div>
+        <details class="howto" id="login-form-github">
+          <summary>Gelişmiş: bu panelden doğrudan eklemek (erişim anahtarı ile)</summary>
+          <p style="margin-top:0.6rem">Depoya yazabilen bir erişim anahtarı girerseniz ekleme, silme ve ayar değişiklikleri doğrudan kaydedilir.</p>
+          <div class="row">
+            <input type="password" id="gh-token" placeholder="Erişim anahtarı (github_pat_…)" autocomplete="off">
+            <button class="btn" id="btn-gh-login">Bağlan</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="row" style="margin-top:0.6rem"><span></span><button class="btn ghost hidden" id="btn-logout">Bağlantıyı kes</button></div>
+      <p id="pages-note" class="status hidden" style="margin-top:0.6rem">Not: Her değişiklik depoya kaydedilir ve yayınlanan uygulama 1–2 dakika içinde güncellenir.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Uygulama Ayarları</h2>
+      <p>Buradaki ayarlar tüm oturumlar için geçerlidir (sunucuda ya da depodaki <code>ayarlar.txt</code> dosyasında saklanır). <a id="edit-settings-link-2" href="#" target="_blank" rel="noopener">ayarlar.txt dosyasını düzenleyerek</a> de değiştirebilirsiniz.</p>
+      <div class="setting">
+        <label for="cfg-dict">Sözlük kontrolü<small>Tahminler 105.000 sözcüklük Türkçe sözlükte aranır. Sözlükte olmayan tahmin hak yakmaz; Yazım Koçu uyarısı verir.</small></label>
+        <input type="checkbox" class="switch" id="cfg-dict" disabled>
+      </div>
+      <div class="setting">
+        <label for="cfg-bonus">İpucu harfi<small>İki takım modunda sıra rakibe geçince sözcükten rastgele bir harf açılır.</small></label>
+        <input type="checkbox" class="switch" id="cfg-bonus" disabled>
+      </div>
+      <p class="status" id="cfg-status" style="margin:0.5rem 0 0"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Genel Havuza Sözcük Ekle</h2>
+      <p>Sözcükleri boşluk, virgül veya satır sonuyla ayırarak yazın. 4–7 harfli, yalnızca Türk alfabesi; büyük/küçük harf fark etmez, tekrarlar atlanır. (<a id="edit-words-link-2" href="#" target="_blank" rel="noopener">kelimeler.txt dosyasını aç</a>)</p>
+      <textarea id="new-words" placeholder="örnek: kalem, defter&#10;pencere"></textarea>
+      <div class="row" style="margin-top:10px">
+        <span class="status" id="add-hint"></span>
+        <button class="btn" id="btn-add">Ekle</button>
+      </div>
+      <div class="report" id="add-report"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Genel Sözcük Havuzu</h2>
+      <div class="row">
+        <div class="tabs" id="tabs"></div>
+        <input type="search" id="search" placeholder="Ara…" style="max-width:220px">
+        <button class="btn secondary" id="btn-export">JSON indir</button>
+      </div>
+      <div class="words" id="word-list"></div>
+    </section>
+  </main>
+
+  <footer class="credit">
+    <div class="credit-text">
+      <span class="kicker">Türk Dili ve Edebiyatı Araştırma Materyali</span>
+      <span><b>Söz İzi</b> · Sözcük Havuzu ve Uygulama Yönetimi</span>
+    </div>
+  </footer>
+
+  <script src="js/words.js"></script>
+  <script src="js/logic.js"></script>
+  <script src="js/github-store.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
